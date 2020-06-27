@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 
 k = 8
 l = 1
-q = 2
+q = 4
 m = 1
-k_e = 0.1
+k_e = 0.2
 
 class graph:
     def __init__(self, A):
@@ -68,12 +68,16 @@ class graph:
 
     def res(self, i):
         ret = np.array([0.0, 0.0])
-        for j in self.nbrs(i):
-            theta = self.arg(i, j)
-            S = self.hooke(i, j)
-            C = self.coulomb(i, j)
-            print(f"S: {S}, C: {C}")
-            ret += (S - C) * np.array([math.cos(theta), math.sin(theta)])
+        for j in range(self.N):
+            if i != j:
+                theta = self.arg(i, j)
+                C = self.coulomb(i, j)
+                S = 0
+                if j in self.nbrs(i):
+                    S = self.hooke(i, j)
+
+                print(f"S: {S}, C: {C}")
+                ret += (S - C) * np.array([math.cos(theta), math.sin(theta)])
 
         return ret
 
