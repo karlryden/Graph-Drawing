@@ -5,7 +5,7 @@ class graph:
     def __init__(self, A):
         self.A = A
         self.N = len(A)
-    
+
     def eig(self):
         return np.linalg.eig(self.A)[1]
 
@@ -57,7 +57,7 @@ if __name__ == '__main__':
 
     #print(np.linalg.eig(A)[1])
     print(G.laplacian())
-    G.plot()
+    #G.plot()
 
     G1 = graph(np.array([[0, 1, 0, 0, 0],
                          [1, 0, 1, 1, 0],
@@ -73,4 +73,8 @@ if __name__ == '__main__':
     G2 = graph(A)
     #G2.plot()
 
-
+    B = np.diagflat((N-1)*[1], -1) + np.diagflat((N-1)*[1], 1)
+    B[0][N-1] = 1
+    B[N-1][0] = 1
+    G3 = graph(B)
+    G3.plot()
