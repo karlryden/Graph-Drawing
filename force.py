@@ -55,12 +55,12 @@ class graph:
     def arg(self, i, j):
         u = self.P[i]
         v = self.P[j]
-        w = u - v
+        w = v - u
 
         return math.atan2(w[1], w[0])
 
     def hooke(self, i, j):
-        return -k * (-l + self.d(i, j))
+        return -k * (l - self.d(i, j))
         #return -k * (l - math.log(self.d(i, j)))
 
     def coulomb(self, i, j):
@@ -103,6 +103,7 @@ if __name__ == '__main__':
     t = 0.01
     for _ in range(1000):
         #print(G.P)
+        plt.clf()
         G.plot()
         for i in range(G.N):
             a = G.res(i) * 1/m
@@ -113,5 +114,4 @@ if __name__ == '__main__':
             break
 
         plt.pause(0.01)
-        plt.clf()
     plt.show()
