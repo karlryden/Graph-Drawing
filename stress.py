@@ -141,22 +141,21 @@ if __name__ == '__main__':
     print(G.A)
 
     eps = 0.1
-    for _ in range(100):
-        plt.clf()
-        alpha = G.sigma()
-        
-        X_star = np.dot(np.linalg.pinv(G.V), G.F())
-        G.X = X_star
-        
-        beta = G.sigma()
-        
-        print(alpha - beta)
-        G.plot()
-
-
-        if alpha - beta < eps:
-            break
+while True:        
+    plt.clf()
+    alpha = G.sigma()
     
-        plt.pause(0.01)
+    X_star = np.dot(np.linalg.pinv(G.V), G.F())
+    G.X = X_star
+    beta = G.sigma()
+        
+    print(alpha - beta)
+    G.plot()
+
+
+    if alpha - beta < eps:
+        break
+    
+    plt.pause(0.01)
 
 plt.show()
