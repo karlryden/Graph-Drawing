@@ -10,6 +10,7 @@ def one(n, k):
 class graph:
     def __init__(self, A=np.array([[0]])):
         self.delta = 1000   # Constant emphasizing stress due to graph-theoretical distance between nodes
+        self.A = A
 
         # Default constructor
         if len(A) == 1:
@@ -20,7 +21,6 @@ class graph:
 
         # Constructor using given adjacency matrix
         else:
-            self.A = A
             self.N = len(A)
             self.X = np.random.rand(self.N, 2)
             self.B = np.zeros((self.N, self.N))
@@ -96,7 +96,7 @@ class graph:
         self.V = np.zeros((self.N, self.N))
         for i in range(self.N - 1):
             for j in range(i + 1, self.N):
-                    self.V += self.w(i, j)*np.dot((one(self.N, i) - one(self.N, j)), (one(self.N, i) - one(self.N, j)).T)
+                self.V += self.w(i, j)*np.dot((one(self.N, i) - one(self.N, j)), (one(self.N, i) - one(self.N, j)).T)
 
     # Stress function
     def sigma(self):
@@ -133,15 +133,16 @@ class graph:
                     plt.plot([self.X[i][0], self.X[j][0]], [self.X[i][1], self.X[j][1]], color='k')
 
 if __name__ == '__main__':
-    '''
+    
     G = graph()
     G.add(0)    # 1
     G.add(1)    # 2
     G.add(2)    # 3
     G.add(2)    # 4
     G.add(3, 4) # 5
-    '''
+    
 
+    '''
     n = 25
     rho = 0.66  # Edge density of random graph
     rnd = np.vectorize(round)
@@ -154,8 +155,8 @@ if __name__ == '__main__':
             A[i][k] = 1
 
     G = graph(A)
-
-    eps = 0.1
+    '''
+    eps = 1
 
     while True:        
         plt.clf()
