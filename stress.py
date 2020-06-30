@@ -9,14 +9,16 @@ def one(n, k):
 
 class graph:
     def __init__(self, A=np.array([[0]])):
-        self.delta = 1000
+        self.delta = 1000   # Constant emphasizing stress due to graph-theoretical distance between nodes
 
+        # Default constructor
         if len(A) == 1:
             self.N = 1
             self.X = np.array([np.array([random.random(), random.random()])])
             self.B = np.array([[0]])
             self.V = np.array([[0]])
 
+        # Constructor using given adjacency matrix
         else:
             self.A = A
             self.N = len(A)
@@ -33,18 +35,18 @@ class graph:
                 for j in range(i + 1, self.N):
                     self.V += self.w(i, j)*np.dot((one(self.N, i) - one(self.N, j)), (one(self.N, i) - one(self.N, j)).T)
 
+    # Neighbors of node i
     def nbrs(self, i):
         return [j for j in range(self.N) if self.A[i][j] != 0]
 
+    # Euclidean distance from node i to node j
     def dist(self, i, j):
         u = self.X[i]
         v = self.X[j]
 
         return np.linalg.norm(v - u)
 
-    def w(self, i, j):
-        return self.delta*1/(self.B[i][j])**2
-
+    # Breadth first search from node i to node j
     def bfs(self, i, j):
         q = queue.Queue()
         q.put((i, 0))
@@ -60,6 +62,11 @@ class graph:
                 if nbr not in visited:
                     q.put((nbr, steps+1))
 
+    # Weight function proportional to graph-theoretical distance between node i and node j
+    def w(self, i, j):
+        return self.delta*1/(self.B[i][j])**2
+
+    # Add node to graph
     def add(self, *nbrs):
         self.N += 1
         i = self.N - 1
@@ -85,12 +92,13 @@ class graph:
             self.B[i][j] = b
             self.B[j][i] = b
 
-        #Extend V
+        # Remake V
         self.V = np.zeros((self.N, self.N))
         for i in range(self.N - 1):
             for j in range(i + 1, self.N):
                     self.V += self.w(i, j)*np.dot((one(self.N, i) - one(self.N, j)), (one(self.N, i) - one(self.N, j)).T)
 
+    # Stress function
     def sigma(self):
         ret = 0
         for i in range(self.N - 1):
@@ -99,6 +107,7 @@ class graph:
 
         return ret
 
+    # B(Z)Z
     def F(self):
         ret = np.zeros((self.N, self.N))
         for i in range(self.N):
@@ -111,20 +120,19 @@ class graph:
 
         return np.dot(ret, self.X)
 
+    # Plots graph
     def plot(self):
         X = self.X[:,0]
         Y = self.X[:,1]
         
         plt.scatter(X, Y, linewidth=8, color='k')
         for i in range(self.N):
-            plt.annotate(f"  {i}", (X[i], Y[i]), fontsize=12)
+            #plt.annotate(f"  {i}", (X[i], Y[i]), fontsize=12)
             for j in range(i, self.N):
                 if self.A[i][j] != 0:
                     plt.plot([self.X[i][0], self.X[j][0]], [self.X[i][1], self.X[j][1]], color='k')
 
 if __name__ == '__main__':
-    import time
-    t0 = time.time()
     '''
     G = graph()
     G.add(0)    # 1
@@ -135,27 +143,36 @@ if __name__ == '__main__':
     '''
 
     n = 25
-    rho = 0.66
+    rho = 0.66  # Edge density of random graph
     rnd = np.vectorize(round)
-    G = graph(rnd(rho * np.random.rand(n, n)))
-    print(G.A)
+    A = rnd(rho*np.random.rand(n, n))
+    
+    # Connect disconnected nodes
+    for i in range(n):
+        if all([A[i][j] == 0 for j in range(n)]):
+            k = random.randint(0, n-1)
+            A[i][k] = 1
+
+    G = graph(A)
 
     eps = 0.1
-while True:        
-    plt.clf()
-    alpha = G.sigma()
-    
-    X_star = np.dot(np.linalg.pinv(G.V), G.F())
-    G.X = X_star
-    beta = G.sigma()
+
+    while True:        
+        plt.clf()
+        alpha = G.sigma()
         
-    print(alpha - beta)
-    G.plot()
+        # Update X using majorizer function from Cauchy-Schwarz inequality
+        X_star = np.dot(np.linalg.pinv(G.V), G.F())
+        G.X = X_star
+        beta = G.sigma()
+            
+        print(f"stress: {beta}")
+        G.plot()
 
+        # Break if stress reduction is smaller than threshold
+        if alpha - beta < eps:
+            break
+        
+        plt.pause(0.01)
 
-    if alpha - beta < eps:
-        break
-    
-    plt.pause(0.01)
-
-plt.show()
+    plt.show()
