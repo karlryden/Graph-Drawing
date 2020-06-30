@@ -2,20 +2,27 @@ import math, random, queue
 import numpy as np
 import matplotlib.pyplot as plt
 
-k = 8
-l = 1
-q = 4
+k = 25
+l = 5
+q = 8
 m = 1
-k_e = 0.2
+k_e = 8
+g = 10
 
 class graph:
     def __init__(self, A):
         self.A = A
         self.N = len(A)
         self.M = np.zeros((self.N, self.N))
+        self.D = np.zeros((self.N, self.N))
         for i in range(self.N):
             for j in self.A[i]:
                 self.M[i][j] = 1
+
+                if j > i:
+                    d = self.bfs(i, j)
+                    self.D[i][j] = d
+                    self.D[j][i] = d
 
         positions = []
         velocities = []
@@ -37,11 +44,11 @@ class graph:
 
     def bfs(self, i, j):
         q = queue.Queue()
-        q.offer(i)
+        q.put(i)
         ret = 0
         visited = set()
         while not q.empty():
-            n = q.pop()
+            n = q.get()
             if n == j:
                 return ret
 
@@ -50,7 +57,7 @@ class graph:
 
             for nbr in self.nbrs(n):
                 if nbr not in visited:
-                    q.offer(nbr)
+                    q.put(nbr)
 
     def arg(self, i, j):
         u = self.P[i]
@@ -62,6 +69,7 @@ class graph:
     def hooke(self, i, j):
         return -k * (l - self.d(i, j))
         #return -k * (l - math.log(self.d(i, j)))
+        #return -k * (self.bfs(i, j) - self.d(i, j))
 
     def coulomb(self, i, j):
         return k_e * q**2 / (self.d(i, j)**2)
@@ -76,17 +84,20 @@ class graph:
                 if j in self.nbrs(i):
                     S = self.hooke(i, j)
 
-                print(f"S: {S}, C: {C}")
                 ret += (S - C) * np.array([math.cos(theta), math.sin(theta)])
+                #alpha = math.atan2(self.P[i][1], self.P[i][0])
+                #ret -= g * np.array([math.cos(alpha), math.sin(alpha)])
+        print(f"F{i}: {ret}")
 
         return ret
 
     def plot(self):
         X = [p[0] for p in self.P]
         Y = [p[1] for p in self.P]
-
+        
         plt.scatter(X, Y, linewidth=8, color='k')
         for i in range(self.N):
+            plt.annotate(f"  {i}", (X[i], Y[i]), fontsize=12)
             for j in range(i, self.N):
                 if self.M[i][j] != 0:
                     plt.plot([self.P[i][0], self.P[j][0]], [self.P[i][1], self.P[j][1]], color='k')
@@ -100,18 +111,24 @@ if __name__ == '__main__':
                [2, 5],
                [3, 4]])
 
+    print(G.D)
+    '''
     t = 0.01
+    
     for _ in range(1000):
         #print(G.P)
         plt.clf()
         G.plot()
-        for i in range(G.N):
+        A = np.array([0.0, 0.0])
+        for i in range(G.N - 1):
             a = G.res(i) * 1/m
+            A += a
             G.V[i] += t * a
             G.P[i] += t * G.V[i]
 
-        if np.linalg.norm(a) < 0.25:
+        if np.linalg.norm(A) < 1:
             break
 
         plt.pause(0.01)
     plt.show()
+    '''
