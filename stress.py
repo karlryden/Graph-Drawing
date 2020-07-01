@@ -120,6 +120,23 @@ class graph:
 
         return np.dot(ret, self.X)
 
+    # Minimizes stress using majorizer
+    def majorize(self, eps=5):
+        # Update X using majorizer function from Cauchy-Schwarz inequality
+        X_star = np.dot(np.linalg.pinv(self.V), self.F())
+        self.X = X_star
+
+    # Repeatedly majorizes stress until local minimum is reached
+    def SMACOF(self, eps=5):
+        while True:
+            alpha = self.sigma()
+            self.majorize()
+            beta = self.sigma()
+
+            # Break if stress reduction is smaller than threshold
+            if alpha - beta < eps:
+                break
+
     # Plots graph
     def plot(self):
         X = self.X[:,0]
@@ -133,18 +150,18 @@ class graph:
                     plt.plot([self.X[i][0], self.X[j][0]], [self.X[i][1], self.X[j][1]], color='k')
 
 if __name__ == '__main__':
-    
+    '''
     G = graph()
     G.add(0)    # 1
     G.add(1)    # 2
     G.add(2)    # 3
     G.add(2)    # 4
     G.add(3, 4) # 5
-    
-
     '''
-    n = 25
-    rho = 0.66  # Edge density of random graph
+
+    
+    n = 16
+    rho = 0.8  # Edge density of random graph
     rnd = np.vectorize(round)
     A = rnd(rho*np.random.rand(n, n))
     
@@ -155,16 +172,16 @@ if __name__ == '__main__':
             A[i][k] = 1
 
     G = graph(A)
-    '''
-    eps = 1
+    G.SMACOF()
+    G.plot()
+    plt.show()
 
+
+    '''
     while True:        
         plt.clf()
         alpha = G.sigma()
-        
-        # Update X using majorizer function from Cauchy-Schwarz inequality
-        X_star = np.dot(np.linalg.pinv(G.V), G.F())
-        G.X = X_star
+        G.majorize()
         beta = G.sigma()
             
         print(f"stress: {beta}")
@@ -177,3 +194,4 @@ if __name__ == '__main__':
         plt.pause(0.01)
 
     plt.show()
+    '''
