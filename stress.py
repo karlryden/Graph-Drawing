@@ -2,38 +2,18 @@ import math, random, queue
 import numpy as np
 import matplotlib.pyplot as plt
 
-def one(n, k):
-    ret = np.zeros((n, 1))
-    ret[k][0] = 1
-    return ret
-
 class graph:
     def __init__(self, A=np.array([[0]])):
         self.delta = 1000   # Constant emphasizing stress due to graph-theoretical distance between nodes
-        self.A = A
+        self.A = np.zeros((1, 1))
+        self.N = 1
+        self.X = np.random.rand(self.N, 2)
+        self.B = np.zeros((1, 1))
 
-        # Default constructor
-        if len(A) == 1:
-            self.N = 1
-            self.X = np.array([np.array([random.random(), random.random()])])
-            self.B = np.array([[0]])
-            self.V = np.array([[0]])
-
-        # Constructor using given adjacency matrix
-        else:
-            self.N = len(A)
-            self.X = np.random.rand(self.N, 2)
-            self.B = np.zeros((self.N, self.N))
-            for i in range(self.N - 1):
-                for j in range(i + 1, self.N):
-                    b = self.bfs(i, j)
-                    self.B[i][j] = b
-                    self.B[j][i] = b
-
-            self.V = np.zeros((self.N, self.N))
-            for i in range(self.N - 1):
-                for j in range(i + 1, self.N):
-                    self.V += self.w(i, j)*np.dot((one(self.N, i) - one(self.N, j)), (one(self.N, i) - one(self.N, j)).T)
+        n = len(A)
+        if n > 1:           # Adds more nodes if adjacency matrix is given to constructor
+            for i in range(1, n):
+                self.add([j for j in range(i) if A[i][j]])
 
     # Neighbors of node i
     def nbrs(self, i):
@@ -67,36 +47,40 @@ class graph:
         return self.delta*1/(self.B[i][j])**2
 
     # Add node to graph
-    def add(self, *nbrs):
-        self.N += 1
-        i = self.N - 1
-        x = np.zeros((1, i))
-        
+    def add(self, nbrs):
         # Extend X
         self.X = np.concatenate((self.X, np.array([[random.random(), random.random()]])), axis=0)
 
         # Extend A, B
+        x = np.zeros((1, self.N))
         self.A = np.concatenate((self.A, x), axis=0)
         self.B = np.concatenate((self.B, x), axis=0)
 
-        y = np.zeros((self.N, 1))
+        y = np.zeros((self.N+1, 1))
         self.A = np.concatenate((self.A, y), axis=1)
         self.B = np.concatenate((self.B, y), axis=1)
-        
+
+        # Update A
         for nbr in nbrs:
-            self.A[i][nbr] = 1
-            self.A[nbr][i] = 1
+            self.A[self.N][nbr] = 1
+            self.A[nbr][self.N] = 1
 
-        for j in range(i):
-            b = self.bfs(i, j)
-            self.B[i][j] = b
-            self.B[j][i] = b
+        # Update B
+        for j in range(self.N):
+            b = self.bfs(self.N, j)
+            self.B[self.N][j] = b
+            self.B[j][self.N] = b
 
+        self.N += 1
+        
         # Remake V
         self.V = np.zeros((self.N, self.N))
         for i in range(self.N - 1):
             for j in range(i + 1, self.N):
-                self.V += self.w(i, j)*np.dot((one(self.N, i) - one(self.N, j)), (one(self.N, i) - one(self.N, j)).T)
+                [ei, ej] = [np.eye(self.N)[:,k][np.newaxis].T for k in [i, j]]
+                #print(f"e{i}: {ei}")
+                #print(f"e{j}: {ej}")
+                self.V += self.w(i, j)*np.dot((ei - ej), (ei - ej).T)
 
     # Stress function
     def sigma(self):
@@ -149,35 +133,34 @@ class graph:
                 if self.A[i][j] != 0:
                     plt.plot([self.X[i][0], self.X[j][0]], [self.X[i][1], self.X[j][1]], color='k')
 
+
 if __name__ == '__main__':
     '''
     G = graph()
-    G.add(0)    # 1
-    G.add(1)    # 2
-    G.add(2)    # 3
-    G.add(2)    # 4
-    G.add(3, 4) # 5
+    G.add([0])    # 1
+    G.add([1])    # 2
+    G.add([2])    # 3
+    G.add([2])    # 4
+    G.add([3, 4]) # 5
     '''
 
-    
-    n = 16
-    rho = 0.8  # Edge density of random graph
-    rnd = np.vectorize(round)
-    A = rnd(rho*np.random.rand(n, n))
-    
-    # Connect disconnected nodes
-    for i in range(n):
-        if all([A[i][j] == 0 for j in range(n)]):
-            k = random.randint(0, n-1)
-            A[i][k] = 1
+    A = np.array([[0, 1, 0, 0, 0, 0],
+                  [1, 0, 1, 0, 0, 0],
+                  [0, 1, 0, 1, 1, 0],
+                  [0, 0, 1, 0, 0, 1],
+                  [0, 0, 1, 0, 0, 1],
+                  [0, 0, 0, 1, 1, 0]])
 
     G = graph(A)
+    print(G.A)
+    '''
     G.SMACOF()
     G.plot()
     plt.show()
-
-
     '''
+
+    # Animates majorization process
+    eps = 5
     while True:        
         plt.clf()
         alpha = G.sigma()
@@ -194,4 +177,4 @@ if __name__ == '__main__':
         plt.pause(0.01)
 
     plt.show()
-    '''
+    
