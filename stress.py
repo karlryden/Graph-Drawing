@@ -75,9 +75,10 @@ class graph:
         
         # Remake V
         self.V = np.zeros((self.N, self.N))
+        E = np.eye(self.N)
         for i in range(self.N - 1):
             for j in range(i + 1, self.N):
-                [ei, ej] = [np.eye(self.N)[:,k][np.newaxis].T for k in [i, j]]
+                [ei, ej] = [E[:,k][np.newaxis].T for k in [i, j]]
                 self.V += self.w(i, j)*np.dot((ei - ej), (ei - ej).T)
 
     # Stress function
