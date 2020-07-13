@@ -44,7 +44,7 @@ class graph:
 
     # Weight function proportional to graph-theoretical distance between node i and node j
     def w(self, i, j):
-        return self.delta*1/(self.B[i][j])**2
+        return self.delta*1/(self.B[i][j]**2)
 
     # Add node to graph
     def add(self, nbrs):
@@ -78,8 +78,6 @@ class graph:
         for i in range(self.N - 1):
             for j in range(i + 1, self.N):
                 [ei, ej] = [np.eye(self.N)[:,k][np.newaxis].T for k in [i, j]]
-                #print(f"e{i}: {ei}")
-                #print(f"e{j}: {ej}")
                 self.V += self.w(i, j)*np.dot((ei - ej), (ei - ej).T)
 
     # Stress function
