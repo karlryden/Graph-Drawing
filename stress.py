@@ -73,13 +73,15 @@ class graph:
 
         self.N += 1
         
-        # Remake V
+        # Remake V, V^-1
         self.V = np.zeros((self.N, self.N))
         E = np.eye(self.N)
         for i in range(self.N - 1):
             for j in range(i + 1, self.N):
                 [ei, ej] = [E[:,k][np.newaxis].T for k in [i, j]]
                 self.V += self.w(i, j)*np.dot((ei - ej), (ei - ej).T)
+
+        self.V_inv = np.linalg.pinv(self.V)
 
     # Stress function
     def sigma(self):
@@ -106,7 +108,7 @@ class graph:
     # Minimizes stress using majorizer
     def majorize(self, eps=5):
         # Update X using majorizer function from Cauchy-Schwarz inequality
-        X_star = np.dot(np.linalg.pinv(self.V), self.F())
+        X_star = np.dot(self.V_inv, self.F())
         self.X = X_star
 
     # Repeatedly majorizes stress until local minimum is reached
@@ -115,7 +117,7 @@ class graph:
             alpha = self.sigma()
             self.majorize()
             beta = self.sigma()
-
+            
             # Break if stress reduction is smaller than threshold
             if alpha - beta < eps:
                 break
@@ -159,13 +161,16 @@ if __name__ == '__main__':
     '''
 
     # Animates majorization process
+    import time
     eps = 5
     while True:        
         plt.clf()
         alpha = G.sigma()
+        t0 = time.time()
         G.majorize()
         beta = G.sigma()
-            
+        t1 = time.time()
+        print(f"Majorizing time: {t1-t0}")
         print(f"stress: {beta}")
         G.plot()
 
