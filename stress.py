@@ -129,22 +129,28 @@ class graph:
         
         plt.scatter(X, Y, linewidth=8, color='k')
         for i in range(self.N):
-            #plt.annotate(f"  {i}", (X[i], Y[i]), fontsize=12)
+            plt.annotate(f"  {i}", (X[i], Y[i]), fontsize=12)
             for j in range(i, self.N):
                 if self.A[i][j] != 0:
                     plt.plot([self.X[i][0], self.X[j][0]], [self.X[i][1], self.X[j][1]], color='k')
 
 
 if __name__ == '__main__':
-    '''
+
     G = graph()
     G.add([0])    # 1
     G.add([1])    # 2
     G.add([2])    # 3
     G.add([2])    # 4
     G.add([3, 4]) # 5
-    '''
+    G.add([5])
+    G.add([6])
+    G.add([5, 6])
+    G.add([7, 2])
+    G.add([4])
+    G.add([0, 10])    
 
+    '''
     A = np.array([[0, 1, 0, 0, 0, 0],
                   [1, 0, 1, 0, 0, 0],
                   [0, 1, 0, 1, 1, 0],
@@ -153,6 +159,7 @@ if __name__ == '__main__':
                   [0, 0, 0, 1, 1, 0]])
 
     G = graph(A)
+    '''
     print(G.A)
     '''
     G.SMACOF()
@@ -162,7 +169,7 @@ if __name__ == '__main__':
 
     # Animates majorization process
     import time
-    eps = 5
+    eps = 1
     while True:        
         plt.clf()
         alpha = G.sigma()
@@ -181,4 +188,3 @@ if __name__ == '__main__':
         plt.pause(0.01)
 
     plt.show()
-    
