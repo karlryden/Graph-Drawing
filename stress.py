@@ -4,20 +4,21 @@ import matplotlib.pyplot as plt
 
 class graph:
     def __init__(self, A=np.array([[0]])):
-        self.delta = 1000   # Constant emphasizing stress due to graph-theoretical distance between nodes
-        self.A = np.zeros((1, 1))
-        self.N = 1
-        self.X = np.random.rand(self.N, 2)
-        self.B = np.zeros((1, 1))
+        self.delta = 1000           # Constant emphasizing stress due to graph-theoretical distance between nodes
+        self.A = np.zeros((1, 1))   # Adjacency matrix
+        self.D = np.zeros((1, 1))   # Degree matrix
+        self.N = 1                  # |V|
+        self.X = np.zeros((1, 2))   # Configuration of the nodes' cartesian coordinates
+        self.B = np.zeros((1, 1))   # Graph-theoretical distance matrix
 
         n = len(A)
-        if n > 1:           # Adds more nodes if adjacency matrix is given to constructor
+        if n > 1:                   # Adds more nodes if adjacency matrix is given to constructor
             for i in range(1, n):
                 self.add([j for j in range(i) if A[i][j]])
 
     # Neighbors of node i
     def nbrs(self, i):
-        return [j for j in range(self.N) if self.A[i][j] != 0]
+        return [j for j in range(self.N) if self.A[i][j]]
 
     # Euclidean distance from node i to node j
     def dist(self, i, j):
@@ -48,22 +49,25 @@ class graph:
 
     # Add node to graph
     def add(self, nbrs):
-        # Extend X
-        self.X = np.concatenate((self.X, np.array([[random.random(), random.random()]])), axis=0)
-
-        # Extend A, B
+        # Extend A, B, D
         x = np.zeros((1, self.N))
         self.A = np.concatenate((self.A, x), axis=0)
         self.B = np.concatenate((self.B, x), axis=0)
+        self.D = np.concatenate((self.D, x), axis=0)
 
         y = np.zeros((self.N+1, 1))
         self.A = np.concatenate((self.A, y), axis=1)
         self.B = np.concatenate((self.B, y), axis=1)
+        self.D = np.concatenate((self.D, y), axis=1)
 
-        # Update A
+        # Update A, D
         for nbr in nbrs:
             self.A[self.N][nbr] = 1
             self.A[nbr][self.N] = 1
+
+            self.D[nbr][nbr] += 1
+
+        self.D[self.N][self.N] = len(nbrs)
 
         # Update B
         for j in range(self.N):
@@ -71,17 +75,27 @@ class graph:
             self.B[self.N][j] = b
             self.B[j][self.N] = b
 
+        # Update laplacian matrix L
+        self.L = self.D - self.A
+
+        # Remake X
+        lambdas, eigs = np.linalg.eig(self.L)
+        [l1, l2] = sorted(lambdas)[:2]
+        i = np.where(lambdas==l1)
+        j = np.where(lambdas==l2)
+        self.X = np.concatenate((eigs[i].T, eigs[j].T), axis=1)
+
         self.N += 1
-        
-        # Remake V, V^-1
-        self.V = np.zeros((self.N, self.N))
+
+        # Remake V^-1
+        V = np.zeros((self.N, self.N))
         E = np.eye(self.N)
         for i in range(self.N - 1):
             for j in range(i + 1, self.N):
                 [ei, ej] = [E[:,k][np.newaxis].T for k in [i, j]]
-                self.V += self.w(i, j)*np.dot((ei - ej), (ei - ej).T)
+                V += self.w(i, j)*np.dot((ei - ej), (ei - ej).T)
 
-        self.V_inv = np.linalg.pinv(self.V)
+        self.V_inv = np.linalg.pinv(V)
 
     # Stress function
     def sigma(self):
@@ -136,20 +150,21 @@ class graph:
 
 
 if __name__ == '__main__':
-
+    import time
     G = graph()
     G.add([0])    # 1
     G.add([1])    # 2
     G.add([2])    # 3
     G.add([2])    # 4
     G.add([3, 4]) # 5
+    
     G.add([5])
     G.add([6])
     G.add([5, 6])
     G.add([7, 2])
     G.add([4])
     G.add([0, 10])    
-
+    
     '''
     A = np.array([[0, 1, 0, 0, 0, 0],
                   [1, 0, 1, 0, 0, 0],
@@ -160,15 +175,16 @@ if __name__ == '__main__':
 
     G = graph(A)
     '''
-    print(G.A)
     '''
+    t0 = time.time()
     G.SMACOF()
+    t1 = time.time()
+    print(f"SMACOF time: {t1-t0}")
     G.plot()
     plt.show()
     '''
-
+    
     # Animates majorization process
-    import time
     eps = 1
     while True:        
         plt.clf()
@@ -177,8 +193,8 @@ if __name__ == '__main__':
         G.majorize()
         beta = G.sigma()
         t1 = time.time()
-        print(f"Majorizing time: {t1-t0}")
-        print(f"stress: {beta}")
+        #print(f"Majorizing time: {t1-t0}")
+        #print(f"stress: {beta}")
         G.plot()
 
         # Break if stress reduction is smaller than threshold
@@ -188,3 +204,4 @@ if __name__ == '__main__':
         plt.pause(0.01)
 
     plt.show()
+    
